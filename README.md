@@ -4,4 +4,4 @@ Exploring how to use Tesseract and Pytesseract before building them into the fun
 
 To set up, [install Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html), then create a virtualenv and activate it, and run `pip install -r requirements.txt`
 
-To run on preset file paths: `python convert.py`
+To run: `python convert.py -i "path/to/file.pdf"`

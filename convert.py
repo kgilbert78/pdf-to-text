@@ -2,8 +2,8 @@ from pdf2image import convert_from_path
 from PIL import Image
 import pytesseract
 import pathlib
-
-print(pytesseract.image_to_string(Image.open("./img/intro-paragraph.png")))
+import os
+import argparse
 
 from pdf2image.exceptions import (
     PDFInfoNotInstalledError,
@@ -11,46 +11,64 @@ from pdf2image.exceptions import (
     PDFSyntaxError,
 )
 
-# use argparse to get input & output paths
-# loop through files with glob */**.pdf ...find syntax
 
-# impliment error handling
-images = convert_from_path(
-    "./pdfs/03-seaweed-and-algae-survey-reports-june-sept-1978.pdf",
-    output_folder="img/macrophyte-algae-report-1978/",
-)
-# options:
-# convert_from_path(pdf_path, dpi=200, output_folder=None, first_page=None, last_page=None, fmt='ppm', jpegopt=None, thread_count=1, userpw=None, use_cropbox=False, strict=False, transparent=False, single_file=False, output_file=str(uuid.uuid4()), poppler_path=None, grayscale=False, size=None, paths_only=False, use_pdftocairo=False, timeout=600, hide_attributes=False)
+def main():
+    # use argparse to get input & output paths
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input", type=str)
 
-# IS THIS BETTER?
-# import tempfile
-# with tempfile.TemporaryDirectory() as path:
-#     images_from_path = convert_from_path('./pdfs/03-seaweed-and-algae-survey-reports-june-sept-1978.pdf', output_folder=path)
-#     # Do something here
+    args = parser.parse_args()
 
-ocrfile = pathlib.Path("./ocr/macrophyte-algae-report-1978.txt")
+    # loop through files with glob */**.pdf ...find syntax
 
-# create progress bar with richtext library
+    # impliment error handling
+    temp_folder = "img/temp/"
 
-print("There are", len(images), "pages.")
+    if args.input:
+        images = convert_from_path(
+            args.input,
+            output_folder=temp_folder,
+        )
 
-# this will be the inner loop for each pdf in the folder
-for index, image in enumerate(images):
-    # outpath = pathlib.Path(
-    #     f'./img/macrophyte-algae-report-1978/image{index}.jpg')
-    # image.save(outpath, 'JPEG')
-    # print(f'Saved image to {outpath}.')
+        infile_name = args.input.split("/")
+        outfile_name = infile_name[-1].split(".")[0]
 
-    print(f"Extracting text from page {index+1}...")
-    text = pytesseract.image_to_string(image)  # time consuming part
+        # options:
+        # convert_from_path(pdf_path, dpi=200, output_folder=None, first_page=None, last_page=None, fmt='ppm', jpegopt=None, thread_count=1, userpw=None, use_cropbox=False, strict=False, transparent=False, single_file=False, output_file=str(uuid.uuid4()), poppler_path=None, grayscale=False, size=None, paths_only=False, use_pdftocairo=False, timeout=600, hide_attributes=False)
 
-    with open(ocrfile, "a") as outfile:
-        outfile.write(text)
-        outfile.write(f"\n END PAGE {index+1}\n")  # do i need this?
-        print(f"Page {index+1} appended to file.")
+        # IS THIS BETTER?
 
-print("Conversion complete :)")
+        # with tempfile.TemporaryDirectory() as path:
+        #     images_from_path = convert_from_path(args.input, output_folder=path)
+        #     # Do something here
 
-# create loop for files in folder that are already images not pdfs
+        ocrfile = pathlib.Path(f"./ocr/{outfile_name}.txt")
 
-# uninstall opencv-python and remove from requirements.txt? didn't seem to need it.
+        # create progress bar with richtext library
+
+        print("There are", len(images), "pages.")
+
+        # this will be the inner loop for each pdf in the folder
+        for index, image in enumerate(images):
+            print(f"Extracting text from page {index+1}...")
+            text = pytesseract.image_to_string(image)  # time consuming part
+
+            with open(ocrfile, "a") as outfile:
+                outfile.write(text)
+                outfile.write(f"\n END PAGE {index+1}\n")  # do i need this?
+                print(f"Page {index+1} appended to file.")
+
+        print(f"deleting temporary files from {temp_folder}...")
+        for file in os.listdir(temp_folder):
+            if os.path.isfile(f"{temp_folder}/{file}"):
+                os.remove(f"{temp_folder}/{file}")
+
+        print("Conversion complete :)")
+
+        # create loop for files in folder that are already images not pdfs
+
+        # uninstall opencv-python and remove from requirements.txt? didn't seem to need it.
+
+
+if __name__ == "__main__":
+    main()
